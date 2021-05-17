@@ -17,7 +17,7 @@ class User {
    */
 
   static async register({ username, password, first_name, last_name, phone }) {
-    //generatte hash password
+    //generate hash password
     // TODO check on join_at column if we need to add it or not.
     const hashedPassword = await bcrypt.hash(password, BCRYPT_WORK_FACTOR);
 
@@ -46,7 +46,7 @@ class User {
     const result = await db.query(`SELECT password FROM users 
                                       WHERE username=$1`, [username]);
     const user = result.row[0];
-    
+
     if (user) {
       if (await bcrypt.compare(password, user.password) === true) {
         return true
@@ -58,6 +58,8 @@ class User {
   /** Update last_login_at for user */
 
   static async updateLoginTimestamp(username) {
+    const loginTime; //maybe DateTime?
+    await db.query (`UPDATE users SET last_login_at=$1 WHERE username=$2`, [loginTime, username])
   }
 
   /** All: basic info on all users:
