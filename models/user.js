@@ -15,7 +15,7 @@ class User {
 
   static async register({ username, password, first_name, last_name, phone }) {
     //generate hash password
-    // TODO check on join_at column if we need to add it or not.
+    // TODO check if we need to add last_login_at
     const hashedPassword = await bcrypt.hash(password, BCRYPT_WORK_FACTOR);
 
     const result = await db.query(`INSERT INTO users
@@ -23,16 +23,17 @@ class User {
                                     password,
                                     first_name,
                                     last_name,
-                                    phone ) 
+                                    phone,
+                                    join_at) 
                                     VALUES 
-                                    ($1, $2, $3, $4, $5)
+                                    ($1, $2, $3, $4, $5, $6, current_timestamp)
                                     RETURNING username,
                                     password,
                                     first_name,
                                     last_name,
                                     phone`
-      , [username, hashedPassword, first_name, last_name, phone])
- 
+      , [username, hashedPassword, first_name, last_name, phone, date])
+
     const user = result.row[0];
     return user;
   }
@@ -56,8 +57,9 @@ class User {
   /** Update last_login_at for user */
 
   static async updateLoginTimestamp(username) {
-    const loginTime; //maybe DateTime?
-    await db.query(`UPDATE users SET last_login_at=$1 WHERE username=$2`, [loginTime, username])
+    // TODO: current_timestamp
+
+    await db.query(`UPDATE users SET last_login_at=current_timestamp WHERE username=$1`, [username])
   }
 
   /** All: basic info on all users:
@@ -95,7 +97,7 @@ class User {
       [username])
     const user = result.rows[0];
 
-    if ( user===undefined ){
+    if (user === undefined) {
       throw new NotFoundError(`User Not Found`)
     }
 
@@ -117,7 +119,7 @@ class User {
                                       FROM messages AS m
                                       JOIN users AS u ON m.to_username = u.username
                                       WHERE m.from_username=$1`, [username])
-                                      
+
     const messages = mResult.rows.map(r => ({
       id: r.id,
       body: r.body,
