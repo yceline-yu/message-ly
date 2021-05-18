@@ -4,6 +4,7 @@ const Router = require("express").Router;
 const router = new Router();
 const {ensureLoggedIn, ensureCorrectUser} = require('../middleware/auth');
 const Message = require('../models/message');
+const { UnauthorizedError } = require("../expressError");
 
 /** GET /:id - get detail of message.
  *
@@ -18,13 +19,19 @@ const Message = require('../models/message');
  *
  **/
 
-router.get('/:id',ensureLoggedIn, ensureCorrectUser, async function(req, res, next){
-
+router.get('/:id', ensureLoggedIn, async function (req, res, next) {
+    //will need to add conditional local to find out if curr logged in user matches the to/from username
     const id = req.params.id;
+
+    const username = res.locals.user.username
 
     const message = await Message.get(id);
 
-    return res.json({message});
+    if (username === message.to_user || username === message.from_user) {
+        return res.json({ message });
+    }
+    throw new UnauthorizedError(`Invalid User`);
+
 });
 
 
@@ -34,10 +41,10 @@ router.get('/:id',ensureLoggedIn, ensureCorrectUser, async function(req, res, ne
  *   {message: {id, from_username, to_username, body, sent_at}}
  *
  **/
-router.post('/', ensureLoggedIn, ensureCorrectUser, async function(req, res, next){
+router.post('/', ensureLoggedIn, async function(req, res, next){
 
     const {to_username, body} = req.body;
-    //formatting of object question (deconstructing?)
+
     const message = await Message.create({from_user:res.locals.user, to_username, body});
 
     return res.json({ message });
@@ -52,13 +59,18 @@ router.post('/', ensureLoggedIn, ensureCorrectUser, async function(req, res, nex
  *
  **/
 
-router.post('/:id/read', ensureLoggedIn, ensureCorrectUser, async function (req, res, next){
+router.post('/:id/read', ensureLoggedIn, async function (req, res, next){
 
     const id = req.params.id;
+    const username = res.locals.user.username;
+    const messageInfo = await Message.get(id);
 
-    const message = await Message.markRead(id);
+    if (username === messageInfo.to_user) {
+        const message = await Message.markRead(id);
+        return res.json({ message });
+    }
+    throw new UnauthorizedError(`Invalid User`);
 
-    return res.json({ message });
 });
 
 
