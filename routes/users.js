@@ -2,7 +2,7 @@
 
 const Router = require("express").Router;
 const router = new Router();
-const {ensureLoggedIn, ensureCorrectUser} = require('../middleware/auth')
+const { ensureLoggedIn, ensureCorrectUser } = require('../middleware/auth')
 const User = require("../models/user")
 
 
@@ -11,11 +11,12 @@ const User = require("../models/user")
  * => {users: [{username, first_name, last_name, phone}, ...]}
  *
  **/
-router.get('/', ensureLoggedIn, async function (req, res, next){
+router.get('/', ensureLoggedIn, async function (req, res) {
+
   const users = await User.all();
 
-  return res.json({users});
-})
+  return res.json({ users });
+});
 
 
 
@@ -24,12 +25,14 @@ router.get('/', ensureLoggedIn, async function (req, res, next){
  * => {user: {username, first_name, last_name, phone, join_at, last_login_at}}
  *
  **/
-router.get('/:username', ensureCorrectUser, async function (req, res, next){
+router.get('/:username', ensureLoggedIn, ensureCorrectUser, async function (req, res) {
+
   const username = req.params.username;
+
   const user = await User.get(username);
 
   return res.json({ user });
-})
+});
 
 
 /** GET /:username/to - get messages to user
@@ -41,10 +44,13 @@ router.get('/:username', ensureCorrectUser, async function (req, res, next){
  *                 from_user: {username, first_name, last_name, phone}}, ...]}
  *
  **/
-router.get('/:username/to', ensureCorrectUser, async function (req, res, next){
-    const username = req.params.username;
-    const messages = await User.messagesTo(username);
-    return res.json({ messages });
+router.get('/:username/to', ensureLoggedIn, ensureCorrectUser, async function (req, res, next) {
+
+  const username = req.params.username;
+
+  const messages = await User.messagesTo(username);
+
+  return res.json({ messages });
 });
 
 /** GET /:username/from - get messages from user
@@ -57,10 +63,13 @@ router.get('/:username/to', ensureCorrectUser, async function (req, res, next){
  *
  **/
 
- router.get('/:username/from', ensureCorrectUser, async function (req, res, next){
-    const username = req.params.username;
-    const messages = await User.messagesFrom(username);
-    return res.json({ messages });
+router.get('/:username/from', ensureLoggedIn, ensureCorrectUser, async function (req, res) {
+
+  const username = req.params.username;
+
+  const messages = await User.messagesFrom(username);
+  
+  return res.json({ messages });
 });
 
 

@@ -19,8 +19,11 @@ const Message = require('../models/message');
  **/
 
 router.get('/:id',ensureLoggedIn, ensureCorrectUser, async function(req, res, next){
+
     const id = req.params.id;
+
     const message = await Message.get(id);
+
     return res.json({message});
 });
 
@@ -31,6 +34,14 @@ router.get('/:id',ensureLoggedIn, ensureCorrectUser, async function(req, res, ne
  *   {message: {id, from_username, to_username, body, sent_at}}
  *
  **/
+router.post('/', ensureLoggedIn, ensureCorrectUser, async function(req, res, next){
+
+    const {to_username, body} = req.body;
+    //formatting of object question (deconstructing?)
+    const message = await Message.create({from_user:res.locals.user, to_username, body});
+
+    return res.json({ message });
+});
 
 
 /** POST/:id/read - mark message as read:
@@ -40,6 +51,15 @@ router.get('/:id',ensureLoggedIn, ensureCorrectUser, async function(req, res, ne
  * Makes sure that the only the intended recipient can mark as read.
  *
  **/
+
+router.post('/:id/read', ensureLoggedIn, ensureCorrectUser, async function (req, res, next){
+
+    const id = req.params.id;
+
+    const message = await Message.markRead(id);
+
+    return res.json({ message });
+});
 
 
 module.exports = router;
